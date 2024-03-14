@@ -2,13 +2,18 @@
 // Coursework 2023/2024
 //
 // Submission by
-// YOUR_NAME_GOES_HERE
-// YOUR_STUDENT_ID_NUMBER_GOES_HERE
-// YOUR_EMAIL_GOES_HERE
+// Name: Fathi Mohamed
+// ID: 220007064
+// Email: Fathi.Mohamed@city.ac.uk
 
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
+import static java.lang.System.in;
+import static java.lang.System.out;
 
 // DO NOT EDIT starts
 interface TemporaryNodeInterface {
@@ -22,6 +27,7 @@ interface TemporaryNodeInterface {
 public class TemporaryNode implements TemporaryNodeInterface {
 
     private Socket socket;
+
 
     public boolean start(String startingNodeName, String startingNodeAddress) {
 	    try{
@@ -38,10 +44,28 @@ public class TemporaryNode implements TemporaryNodeInterface {
     }
 
     public boolean store(String key, String value) {
-	// Implement this!
-	// Return true if the store worked
-	// Return false if the store failed
-	return true;
+        // This Java exception would try to connect
+	    try{
+            // This checks if the socket is not connected or if it is empty
+            if(socket == null || !socket.isConnected()){
+                System.err.println("You are not connected to the network");
+                return false;
+            }
+            // This would allow a put request to be sent, so it can store the keys and values
+            PrintWriter writerOut = new PrintWriter(socket.getOutputStream(), true);
+            BufferedReader readerIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            // This would create the put request
+            String request = "PUT?" + key.lines().count() + " " + value.lines().count() + "\n" + key + value;
+            // This would send the put request
+            writerOut.println(request);
+            // This would get the put response
+            String response = readerIn.readLine();
+            // This would check if the store has worked
+            return "SUCCESS".equals(response); // Return true if the store worked
+        } catch (IOException e){
+            System.err.println("Issues with storing keys and values" + e.getMessage());
+            return false; // Return false if the store failed
+        }
     }
 
     public String get(String key) {
