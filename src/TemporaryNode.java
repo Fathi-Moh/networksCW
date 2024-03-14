@@ -12,8 +12,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import static java.lang.System.in;
-import static java.lang.System.out;
 
 // DO NOT EDIT starts
 interface TemporaryNodeInterface {
@@ -27,7 +25,6 @@ interface TemporaryNodeInterface {
 public class TemporaryNode implements TemporaryNodeInterface {
 
     private Socket socket;
-
 
     public boolean start(String startingNodeName, String startingNodeAddress) {
 	    try{
@@ -55,11 +52,14 @@ public class TemporaryNode implements TemporaryNodeInterface {
             PrintWriter writerOut = new PrintWriter(socket.getOutputStream(), true);
             BufferedReader readerIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             // This would create the put request
-            String request = "PUT?" + key.lines().count() + " " + value.lines().count() + "\n" + key + value;
+            String request = "PUT? " + key.lines().count() + " " + value.lines().count() + "\n" + key + value;
             // This would send the put request
             writerOut.println(request);
             // This would get the put response
             String response = readerIn.readLine();
+            // This would close the streams
+            writerOut.close();
+            readerIn.close();
             // This would check if the store has worked
             return "SUCCESS".equals(response); // Return true if the store worked
         } catch (IOException e){
@@ -69,9 +69,34 @@ public class TemporaryNode implements TemporaryNodeInterface {
     }
 
     public String get(String key) {
-	// Implement this!
-	// Return the string if the get worked
-	// Return null if it didn't
-	return "Not implemented";
+        // This would find the value corresponding to the given key
+	    try{
+            // This checks if the socket is not connected or if it is empty
+            if(socket == null || !socket.isConnected()){
+                System.err.println("You are not connected to the network");
+                return null;
+            }
+            // This would create the get request
+            PrintWriter writerOut = new PrintWriter(socket.getOutputStream(), true);
+            BufferedReader readerIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            //
+            String request = "GET? " + key.lines().count() + "\n" + key;
+            // This would send the get request
+            writerOut.println(request);
+            //This would get the request
+            String response = readerIn.readLine();
+            // This would close the streams
+            writerOut.close();
+            readerIn.close();
+
+            if(response.startsWith("VALUE")){
+                return response.substring(6).trim(); // Return the string if the get worked
+            } else{
+                return null; // Return null meaning the value could not be found
+            }
+        } catch(IOException e){
+            System.err.println("Issues with getting value for key" + e.getMessage());
+            return null; // Return null if it didn't
+        }
     }
 }
