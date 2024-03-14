@@ -7,6 +7,9 @@
 // YOUR_EMAIL_GOES_HERE
 
 
+import java.io.IOException;
+import java.net.Socket;
+
 // DO NOT EDIT starts
 interface TemporaryNodeInterface {
     public boolean start(String startingNodeName, String startingNodeAddress);
@@ -18,11 +21,20 @@ interface TemporaryNodeInterface {
 
 public class TemporaryNode implements TemporaryNodeInterface {
 
+    private Socket socket;
+
     public boolean start(String startingNodeName, String startingNodeAddress) {
-	// Implement this!
-	// Return true if the 2D#4 network can be contacted
-	// Return false if the 2D#4 network can't be contacted
-	return true;
+	    try{
+            // Create a socket and connect to the starting node's address
+            String[] parts = startingNodeAddress.split(":");
+            String ipAddress = parts[0];
+            int port = Integer.parseInt(parts[1]);
+            socket = new Socket(ipAddress, port);
+            return true; // Connection to network is successful
+        } catch (IOException e){
+            System.err.println("Error connecting to network: " + e.getMessage());
+            return false; // Connecting to network has failed
+        }
     }
 
     public boolean store(String key, String value) {
