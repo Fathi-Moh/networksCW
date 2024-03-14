@@ -30,10 +30,10 @@ public class TemporaryNode implements TemporaryNodeInterface {
             String ipAddress = parts[0];
             int port = Integer.parseInt(parts[1]);
             socket = new Socket(ipAddress, port);
-            return true; // Connection to network is successful
+            return true; // Return true if the 2D#4 network can be contacted
         } catch (IOException e){
             System.err.println("Error connecting to network: " + e.getMessage());
-            return false; // Connecting to network has failed
+            return false; // Return false if the 2D#4 network can't be contacted
         }
     }
 
