@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 
 // DO NOT EDIT starts
 interface TemporaryNodeInterface {
@@ -24,7 +26,28 @@ interface TemporaryNodeInterface {
 
 public class TemporaryNode implements TemporaryNodeInterface {
 
-    private Socket socket;
+    Socket socket;
+    private Map<String, String> newHashID;
+
+    public TemporaryNode(){
+        newHashID = new HashMap<>();
+    }
+    // This method will update the map so that it now contains the new node information
+    private void updateMap(String name, String hashID){
+        newHashID.put(name, hashID);
+    }
+
+    private String conversion(String HashString){
+        String binaryString = "";
+        for(int i = 0; i < HashString.length(); i++){
+            char hexChar = HashString.charAt(i);
+            int hexValue = Character.digit(hexChar, 16);
+            String binaryValue = String.format("%4s", Integer.toBinaryString(hexValue)).replace(' ', '0');
+            binaryString += binaryValue;
+        }
+        return binaryString;
+    }
+
 
     public boolean start(String startingNodeName, String startingNodeAddress) {
 	    try{
