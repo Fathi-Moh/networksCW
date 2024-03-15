@@ -37,6 +37,16 @@ public class TemporaryNode implements TemporaryNodeInterface {
         newHashID.put(name, hashID);
     }
 
+    // This method would calculate the distance between two hashID's
+    private int distanceFromHash(String ID1, String ID2){
+        String BHashID1 = conversion(ID1);
+        String BHashID2 = conversion(ID2);
+        String XORResults = XOR(BHashID1, BHashID2);
+
+        return countLeadingZeros(XORResults);
+    }
+
+    // This method would convert a hexadecimal string to a binary string
     private String conversion(String HashString){
         String binaryString = "";
         for(int i = 0; i < HashString.length(); i++){
@@ -48,6 +58,33 @@ public class TemporaryNode implements TemporaryNodeInterface {
         return binaryString;
     }
 
+    // This method would do a XOR operation on the two binary strings when converted
+    private String XOR(String B1, String B2){
+        StringBuilder result = new StringBuilder();
+        for(int i = 0; i < B1.length(); i++){
+            char bit1 = B1.charAt(i);
+            char bit2 = B2.charAt(i);
+            if(bit1 == bit2){
+                result.append("0");
+            } else {
+                result.append("i");
+            }
+        }
+        return result.toString();
+    }
+
+    // This method will count all the leading zeros in the binary string
+    private int countLeadingZeros(String bString){
+        int counter = 0;
+        for(int i = 0; i < bString.length(); i++){
+            if(bString.charAt(i) == '0'){
+                counter ++;
+            } else {
+                break;
+            }
+        }
+        return counter;
+    }
 
     public boolean start(String startingNodeName, String startingNodeAddress) {
 	    try{
