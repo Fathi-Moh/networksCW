@@ -27,14 +27,14 @@ interface TemporaryNodeInterface {
 public class TemporaryNode implements TemporaryNodeInterface {
 
     Socket socket;
-    private Map<String, String> newHashID;
+    private Map<String, String> hashMap;
 
     public TemporaryNode(){
-        newHashID = new HashMap<>();
+        hashMap = new HashMap<>();
     }
     // This method will update the map so that it now contains the new node information
     private void updateMap(String name, String hashID){
-        newHashID.put(name, hashID);
+        hashMap.put(name, hashID);
     }
 
     // This method would calculate the distance between two hashID's
@@ -86,6 +86,24 @@ public class TemporaryNode implements TemporaryNodeInterface {
         return counter;
     }
 
+
+    // This method would find the closest node to the hashID we are looking for
+    private String findingClosestNode(String finalHashID){
+        String closestNode = null;
+        int minimumDistance = Integer.MAX_VALUE;
+        for(Map.Entry<String, String> entry : hashMap.entrySet()){
+            String nodeName = entry.getKey();
+            String hashID = entry.getValue();
+            int distance = distanceFromHash(hashID, finalHashID);
+            if(distance < minimumDistance){
+                minimumDistance = distance;
+                closestNode = nodeName;
+            }
+        }
+        return closestNode;
+    }
+
+
     public boolean start(String startingNodeName, String startingNodeAddress) {
 	    try{
             // Create a socket and connect to the starting node's address
@@ -93,6 +111,7 @@ public class TemporaryNode implements TemporaryNodeInterface {
             String ipAddress = parts[0];
             int port = Integer.parseInt(parts[1]);
             socket = new Socket(ipAddress, port);
+            updateMap(startingNodeName, startingNodeAddress);
             return true; // Return true if the 2D#4 network can be contacted
         } catch (IOException e){
             System.err.println("Error connecting to network: " + e.getMessage());
@@ -101,30 +120,49 @@ public class TemporaryNode implements TemporaryNodeInterface {
     }
 
     public boolean store(String key, String value) {
-        // This Java exception would try to connect
-	    try{
-            // This checks if the socket is not connected or if it is empty
-            if(socket == null || !socket.isConnected()){
+        try {
+            // Check if the socket is not connected or if it is empty
+            if (socket == null || !socket.isConnected()) {
                 System.err.println("You are not connected to the network");
                 return false;
             }
-            // This would allow a put request to be sent, so it can store the keys and values
+
+            // Calculate the hash of the key and find the closest node to that key
+            String keyHash = conversion(key);
+            String closestNode = findingClosestNode(keyHash);
+            if(closestNode == null){
+                System.err.println("There are 0 nodes available in the network");
+                return false;
+            }
+
+            String[] nodeParts = closestNode.split(":");
+            String nodeIPAddress = nodeParts[0];
+            int nodePort = Integer.parseInt(nodeParts[1]);
+
+            Socket closestNodeSocket = new Socket(nodeIPAddress, nodePort);
+
+            // Create PrintWriter and BufferedReader for socket communication
             PrintWriter writerOut = new PrintWriter(socket.getOutputStream(), true);
             BufferedReader readerIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            // This would create the put request
+
+            // Create the PUT request
             String request = "PUT? " + key.lines().count() + " " + value.lines().count() + "\n" + key + value;
-            // This would send the put request
+
+            // Send the PUT request
             writerOut.println(request);
-            // This would get the put response
+
+            // Get the PUT response
             String response = readerIn.readLine();
-            // This would close the streams
+
+            // Close the streams
             writerOut.close();
             readerIn.close();
-            // This would check if the store has worked
-            return "SUCCESS".equals(response); // Return true if the store worked
-        } catch (IOException e){
+            closestNodeSocket.close();
+            // Check if the store operation was successful
+            return "SUCCESS".equals(response);
+        } catch (IOException e) {
             System.err.println("Issues with storing keys and values" + e.getMessage());
-            return false; // Return false if the store failed
+            return false;
         }
     }
 

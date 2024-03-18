@@ -7,6 +7,9 @@
 // Email: Fathi.Mohamed@city.ac.uk
 
 
+import java.io.IOException;
+import java.net.ServerSocket;
+
 // DO NOT EDIT starts
 interface FullNodeInterface {
     public boolean listen(String ipAddress, int portNumber);
@@ -17,15 +20,21 @@ interface FullNodeInterface {
 
 public class FullNode implements FullNodeInterface {
 
+
     public boolean listen(String ipAddress, int portNumber) {
-	// Implement this!
-	// Return true if the node can accept incoming connections
-	// Return false otherwise
-	return true;
+        try {
+            // Create a ServerSocket and bind it to the specified IP address and port
+            ServerSocket serverSocket = new ServerSocket(portNumber);
+            System.out.println("Listening for incoming connections on " + ipAddress + ":" + portNumber);
+            return true;
+        } catch (IOException e) {
+            System.err.println("Error creating ServerSocket: " + e.getMessage());
+            return false;
+        }
     }
     
     public void handleIncomingConnections(String startingNodeName, String startingNodeAddress) {
-	// Implement this!
+
 	return;
     }
 }
