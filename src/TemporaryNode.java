@@ -12,8 +12,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 // DO NOT EDIT starts
 interface TemporaryNodeInterface {
@@ -27,91 +27,108 @@ interface TemporaryNodeInterface {
 public class TemporaryNode implements TemporaryNodeInterface {
 
     Socket socket;
-    private Map<String, String> hashMap;
 
-    public TemporaryNode(){
-        hashMap = new HashMap<>();
-    }
-    // This method will update the map so that it now contains the new node information
-    private void updateMap(String name, String hashID){
-        hashMap.put(name, hashID);
-    }
+    public String Echo(){
+        try{
+            // Check if the socket is not connected or if it is empty
+            if (socket == null || !socket.isConnected()) {
+                System.err.println("You are not connected to the network");
+                return null;
+            }
+            //Create a reader and a writer to read and respond to request
+            PrintWriter writerOut = new PrintWriter(socket.getOutputStream(), true);
+            BufferedReader readerIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            //Sends an echo request
+            writerOut.println("ECHO? ");
+            //Gets the echo response and reads it
+            String response = readerIn.readLine();
+            //Closes the streams
+            writerOut.close();
+            readerIn.close();
 
-    // This method would calculate the distance between two hashID's
-    private int distanceFromHash(String ID1, String ID2){
-        String BHashID1 = conversion(ID1);
-        String BHashID2 = conversion(ID2);
-        String XORResults = XOR(BHashID1, BHashID2);
+            //returns the echo response
+            return response;
 
-        return countLeadingZeros(XORResults);
-    }
-
-    // This method would convert a hexadecimal string to a binary string
-    private String conversion(String HashString){
-        String binaryString = "";
-        for(int i = 0; i < HashString.length(); i++){
-            char hexChar = HashString.charAt(i);
-            int hexValue = Character.digit(hexChar, 16);
-            String binaryValue = String.format("%4s", Integer.toBinaryString(hexValue)).replace(' ', '0');
-            binaryString += binaryValue;
+        } catch(IOException e){
+            System.err.println("Issues with performing the ECHO request: " + e.getMessage());
+            return null;
         }
-        return binaryString;
     }
 
-    // This method would do a XOR operation on the two binary strings when converted
-    private String XOR(String B1, String B2){
-        StringBuilder result = new StringBuilder();
-        for(int i = 0; i < B1.length(); i++){
-            char bit1 = B1.charAt(i);
-            char bit2 = B2.charAt(i);
-            if(bit1 == bit2){
-                result.append("0");
+    public boolean Notify(String nodeName, String nodeAddress) {
+        try {
+            // Check if the socket is not connected or if it is empty
+            if (socket == null || !socket.isConnected()) {
+                System.err.println("You are not connected to the network");
+                return false;
+            }
+            // Create PrintWriter for socket communication
+            PrintWriter writerOut = new PrintWriter(socket.getOutputStream(), true);
+
+            // Send the notify request
+            writerOut.println("NOTIFY");
+            writerOut.println(nodeName);
+            writerOut.println(nodeAddress);
+            // Close the stream
+            writerOut.close();
+
+            // Returns true if the notify request was sent successfully
+            return true;
+        } catch (IOException e) {
+            System.err.println("Error sending NOTIFY request: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public List<String> nearest(String hashID) {
+        try {
+            // Check if the socket is not connected
+            if (socket == null || !socket.isConnected()) {
+                System.err.println("You are not connected to the network");
+                return null;
+            }
+            // Create PrintWriter and BufferedReader so that it can write, read and respond
+            PrintWriter writerOut = new PrintWriter(socket.getOutputStream(), true);
+            BufferedReader readerIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            // Create the nearest request
+            String request = "NEAREST? " + hashID;
+            // This sends the nearest request
+            writerOut.println(request);
+            // This reads the nearest response
+            String response = readerIn.readLine();
+
+            // Closes all the streams
+            writerOut.close();
+            readerIn.close();
+
+            // You need to parse the response
+            if (response != null && response.startsWith("NODES")) {
+                List<String> nearestNodes = new ArrayList<>();
+                String[] lines = response.split("\n");
+                for (int i = 1; i < lines.length; i++) {
+                    nearestNodes.add(lines[i]);
+                }
+                //Returns the nearest node
+                return nearestNodes;
             } else {
-                result.append("i");
+                System.err.println("Invalid response from server");
+                //Returns null if the response is invalid or lost
+                return null;
             }
+        } catch (IOException e) {
+            System.err.println("Issue with finding the nearest node: " + e.getMessage());
+            //Returns null if there is an issue with finding the nearest node
+            return null;
         }
-        return result.toString();
     }
-
-    // This method will count all the leading zeros in the binary string
-    private int countLeadingZeros(String bString){
-        int counter = 0;
-        for(int i = 0; i < bString.length(); i++){
-            if(bString.charAt(i) == '0'){
-                counter ++;
-            } else {
-                break;
-            }
-        }
-        return counter;
-    }
-
-
-    // This method would find the closest node to the hashID we are looking for
-    private String findingClosestNode(String finalHashID){
-        String closestNode = null;
-        int minimumDistance = Integer.MAX_VALUE;
-        for(Map.Entry<String, String> entry : hashMap.entrySet()){
-            String nodeName = entry.getKey();
-            String hashID = entry.getValue();
-            int distance = distanceFromHash(hashID, finalHashID);
-            if(distance < minimumDistance){
-                minimumDistance = distance;
-                closestNode = nodeName;
-            }
-        }
-        return closestNode;
-    }
-
 
     public boolean start(String startingNodeName, String startingNodeAddress) {
 	    try{
             // Create a socket and connect to the starting node's address
-            String[] parts = startingNodeAddress.split(":");
-            String ipAddress = parts[0];
-            int port = Integer.parseInt(parts[1]);
+            String[] sections = startingNodeAddress.split(":");
+            String ipAddress = sections[0];
+            int port = Integer.parseInt(sections[1]);
             socket = new Socket(ipAddress, port);
-            updateMap(startingNodeName, startingNodeAddress);
             return true; // Return true if the 2D#4 network can be contacted
         } catch (IOException e){
             System.err.println("Error connecting to network: " + e.getMessage());
@@ -127,38 +144,22 @@ public class TemporaryNode implements TemporaryNodeInterface {
                 return false;
             }
 
-            // Calculate the hash of the key and find the closest node to that key
-            String keyHash = conversion(key);
-            String closestNode = findingClosestNode(keyHash);
-            if(closestNode == null){
-                System.err.println("There are 0 nodes available in the network");
-                return false;
-            }
-
-            String[] nodeParts = closestNode.split(":");
-            String nodeIPAddress = nodeParts[0];
-            int nodePort = Integer.parseInt(nodeParts[1]);
-
-            Socket closestNodeSocket = new Socket(nodeIPAddress, nodePort);
-
             // Create PrintWriter and BufferedReader for socket communication
             PrintWriter writerOut = new PrintWriter(socket.getOutputStream(), true);
             BufferedReader readerIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
             // Create the PUT request
             String request = "PUT? " + key.lines().count() + " " + value.lines().count() + "\n" + key + value;
-
-            // Send the PUT request
+            // This sends the PUT request
             writerOut.println(request);
-
-            // Get the PUT response
+            // This gets the PUT response
             String response = readerIn.readLine();
 
-            // Close the streams
+            // Closes all the streams
             writerOut.close();
             readerIn.close();
-            closestNodeSocket.close();
-            // Check if the store operation was successful
+
+            // Returns if the operation is successful
             return "SUCCESS".equals(response);
         } catch (IOException e) {
             System.err.println("Issues with storing keys and values" + e.getMessage());
@@ -177,7 +178,7 @@ public class TemporaryNode implements TemporaryNodeInterface {
             // This would create the get request
             PrintWriter writerOut = new PrintWriter(socket.getOutputStream(), true);
             BufferedReader readerIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            //
+            // This would create the get response
             String request = "GET? " + key.lines().count() + "\n" + key;
             // This would send the get request
             writerOut.println(request);
@@ -188,13 +189,16 @@ public class TemporaryNode implements TemporaryNodeInterface {
             readerIn.close();
 
             if(response.startsWith("VALUE")){
-                return response.substring(6).trim(); // Return the string if the get worked
+                // Return the string if the get worked
+                return response.substring(6).trim();
             } else{
-                return null; // Return null meaning the value could not be found
+                // Return null if the value could not be found
+                return null;
             }
         } catch(IOException e){
             System.err.println("Issues with getting value for key" + e.getMessage());
-            return null; // Return null if it didn't
+            // Return null if it did not get the value for key
+            return null;
         }
     }
 }
