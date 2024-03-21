@@ -192,13 +192,13 @@ public class TemporaryNode implements TemporaryNodeInterface {
                 // Return the string if the get worked
                 return response.substring(6).trim();
             } else{
-                // Return null if the value could not be found
+                // Return null if the value could not be found which means NOPE
                 return null;
             }
         } catch(IOException e){
             System.err.println("Issues with getting value for key" + e.getMessage());
             // Return null if it did not get the value for key
-            return null;
+            return "Not implemented";
         }
     }
 }
