@@ -2,18 +2,15 @@
 // Coursework 2023/2024
 //
 // Submission by
-// Name: Fathi Mohamed
-// ID: 220007064
-// Email: Fathi.Mohamed@city.ac.uk
-
+// Fathi Mohamed
+// 220007064
+// Fathi.Mohamed@city.ac.uk
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 
 // DO NOT EDIT starts
 interface TemporaryNodeInterface {
@@ -26,191 +23,114 @@ interface TemporaryNodeInterface {
 
 public class TemporaryNode implements TemporaryNodeInterface {
 
-    Socket socket;
-
-    public String Echo(){
-        try{
-            // Check if the socket is not connected or if it is empty
-            if (socket == null || !socket.isConnected()) {
-                System.err.println("You are not connected to the network");
-                return null;
-            }
-            //Create a reader and a writer to read and respond to request
-            PrintWriter writerOut = new PrintWriter(socket.getOutputStream(), true);
-            BufferedReader readerIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            //Sends an echo request
-            writerOut.println("ECHO? ");
-            //Gets the echo response and reads it
-            String response = readerIn.readLine();
-            //Closes the streams
-            writerOut.close();
-            readerIn.close();
-
-            //returns the echo response
-            return response;
-
-        } catch(IOException e){
-            System.err.println("Issues with performing the ECHO request: " + e.getMessage());
-            return null;
-        }
-    }
-
-    public boolean Notify(String nodeName, String nodeAddress) {
-        try {
-            // Check if the socket is not connected or if it is empty
-            if (socket == null || !socket.isConnected()) {
-                System.err.println("You are not connected to the network");
-                return false;
-            }
-            // Create PrintWriter for socket communication
-            PrintWriter writerOut = new PrintWriter(socket.getOutputStream(), true);
-
-            // Send the notify request
-            writerOut.println("NOTIFY");
-            writerOut.println(nodeName);
-            writerOut.println(nodeAddress);
-            // Close the stream
-            writerOut.close();
-
-            // Returns true if the notify request was sent successfully
-            return true;
-        } catch (IOException e) {
-            System.err.println("Error sending NOTIFY request: " + e.getMessage());
-            return false;
-        }
-    }
-
-    public List<String> nearest(String hashID) {
-        try {
-            // Check if the socket is not connected
-            if (socket == null || !socket.isConnected()) {
-                System.err.println("You are not connected to the network");
-                return null;
-            }
-            // Create PrintWriter and BufferedReader so that it can write, read and respond
-            PrintWriter writerOut = new PrintWriter(socket.getOutputStream(), true);
-            BufferedReader readerIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            // Create the nearest request
-            String request = "NEAREST? " + hashID;
-            // This sends the nearest request
-            writerOut.println(request);
-            // This reads the nearest response
-            String response = readerIn.readLine();
-
-            // Closes all the streams
-            writerOut.close();
-            readerIn.close();
-
-            // You need to parse the response
-            if (response != null && response.startsWith("NODES")) {
-                List<String> nearestNodes = new ArrayList<>();
-                String[] lines = response.split("\n");
-                for (int i = 1; i < lines.length; i++) {
-                    nearestNodes.add(lines[i]);
-                }
-                //Returns the nearest node
-                return nearestNodes;
-            } else {
-                System.err.println("Invalid response from server");
-                //Returns null if the response is invalid or lost
-                return null;
-            }
-        } catch (IOException e) {
-            System.err.println("Issue with finding the nearest node: " + e.getMessage());
-            //Returns null if there is an issue with finding the nearest node
-            return null;
-        }
-    }
+    private Socket socket;
 
     public boolean start(String startingNodeName, String startingNodeAddress) {
-	    try{
-            // Create a socket and connect to the starting node's address
-            String[] sections = startingNodeAddress.split(":");
-            String ipAddress = sections[0];
-            int port = Integer.parseInt(sections[1]);
-            socket = new Socket(ipAddress, port);
-            // Return true if the 2D#4 network can be contacted
-            return true;
-        } catch (IOException e){
-            System.err.println("Error connecting to network: " + e.getMessage());
-            return false; // Return false if the 2D#4 network can't be contacted
-        }
-    }
+        try {
+            // The starting node address is to be split to get the IP address and port
+            String[] parts = startingNodeAddress.split(":");
+            String ipAddress = parts[0];
+            int port = Integer.parseInt(parts[1]);
 
-    public void end(){
-        try{
-            if(socket != null && !socket.isClosed()){
-                socket.close();
-                System.out.println("Socket connection has been closed");
+            // Creates a TCP connection with the starting node
+            socket = new Socket(ipAddress, port);
+
+            // This will send out a START message
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            out.println("START 1 " + startingNodeName);
+
+            // This will read and check for response
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            String response = in.readLine();
+
+            // Checks if a START message has been received or not
+            if (response != null && response.startsWith("START")) {
+                System.out.println("Connected to the 2D#4 network");
+                // Return true if the 2D#4 network can be contacted
+                return true;
+            } else {
+                System.err.println("Failed to start communication with starting node");
+                // Return false if the 2D#4 network can't be contacted
+                return false;
             }
-        } catch(IOException e){
-            System.err.println("Issue with closing the socket connection " + e.getMessage());
+        } catch (IOException e) {
+            // prints a line saying there is an issue with performing the start method
+            System.err.println("Error connecting to starting node: " + e.getMessage());
+            return false;
         }
     }
 
     public boolean store(String key, String value) {
         try {
-            // Check if the socket is not connected or if it is empty
-            if (socket == null || !socket.isConnected()) {
-                System.err.println("You are not connected to the network");
+            // Creating the PUT request
+            String putRequest = "PUT? " + key.split("\n").length + " " + value.split("\n").length + "\n" + key + value;
+
+            // writing and sending the PUT request to the fullNode
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            out.println(putRequest);
+
+            // checks if there has been a response to the request
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            String response = in.readLine();
+
+            // Checks if the response is a SUCCESS or has FAILED
+            if (response != null && response.equals("SUCCESS")) {
+                // Return true if the store worked
+                return true;
+            } else if (response != null && response.equals("FAILED")) {
+                System.err.println("Store unsuccessful, issues with message being refused");
+                // Return false if the store failed
+                return false;
+            } else {
+                // Prints a line saying there is an issue with receiving the response from the fullNode
+                System.err.println("Invalid response received");
                 return false;
             }
-
-            // Create PrintWriter and BufferedReader for socket communication
-            PrintWriter writerOut = new PrintWriter(socket.getOutputStream(), true);
-            BufferedReader readerIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-            // Create the PUT request
-            String request = "PUT? " + key.lines().count() + " " + value.lines().count() + "\n" + key + value;
-            // This sends the PUT request
-            writerOut.println(request);
-            // This gets the PUT response
-            String response = readerIn.readLine();
-
-            // Closes all the streams
-            writerOut.close();
-            readerIn.close();
-
-            // Returns if the operation is successful
-            return "SUCCESS".equals(response);
         } catch (IOException e) {
-            System.err.println("Issues with storing keys and values" + e.getMessage());
+            // Prints a line stating there are issues with the store method functionality
+            System.err.println("Issue storing key-value pair: " + e.getMessage());
             return false;
         }
     }
 
     public String get(String key) {
-        // This would find the value corresponding to the given key
-	    try{
-            // This checks if the socket is not connected or if it is empty
-            if(socket == null || !socket.isConnected()){
-                System.err.println("You are not connected to the network");
-                return null;
-            }
-            // This would create the get request
-            PrintWriter writerOut = new PrintWriter(socket.getOutputStream(), true);
-            BufferedReader readerIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            // This would create the get response
-            String request = "GET? " + key.lines().count() + "\n" + key;
-            // This would send the get request
-            writerOut.println(request);
-            //This would get the request
-            String response = readerIn.readLine();
-            // This would close the streams
-            writerOut.close();
-            readerIn.close();
+        try {
+            // Creating the GET request
+            String getRequest = "GET? " + key.split("\n").length + "\n" + key;
 
-            if(response.startsWith("VALUE")){
+            // This will write and send the GET request
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            out.println(getRequest);
+
+            // Reads and checks if there has been a response to the request
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            String response = in.readLine();
+
+            // This checks if the output would be a string of value or will not work and output NOPE returning null
+            if (response != null && response.startsWith("VALUE")) {
+                // retrieving the value
+                int valueLines = Integer.parseInt(response.split(" ")[1]);
+                StringBuilder valueBuilder = new StringBuilder();
+                for (int i = 0; i < valueLines; i++) {
+                    valueBuilder.append(in.readLine());
+                    if (i < valueLines - 1)
+                        valueBuilder.append("\n");
+                }
                 // Return the string if the get worked
-                return response.substring(6).trim();
-            } else{
-                // Return null if the value could not be found which means NOPE
+                return valueBuilder.toString();
+            } else if (response != null && response.equals("NOPE")) {
+                System.err.println("No value found for key: " + key);
+                // Return null if it didn't
+                return null;
+            } else {
+                // Prints a line stating the value has not been received
+                System.err.println("Invalid response received");
                 return null;
             }
-        } catch(IOException e){
-            System.err.println("Issues with getting value for key" + e.getMessage());
-            // Return null if it did not get the value for key
-            return "Not implemented";
+        } catch (IOException e) {
+            // Prints a line stating that there has been an error with getting the value meaning an issue with the get method
+            System.err.println("Error retrieving value for key: " + e.getMessage());
+            return null;
         }
     }
 }
