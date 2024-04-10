@@ -28,20 +28,20 @@ public class TemporaryNode implements TemporaryNodeInterface {
     public boolean start(String startingNodeName, String startingNodeAddress) {
         try {
             // The starting node address is to be split to get the IP address and port
-            String[] parts = startingNodeAddress.split(":");
-            String ipAddress = parts[0];
-            int port = Integer.parseInt(parts[1]);
+            String[] sections = startingNodeAddress.split(":");
+            String ipAddress = sections[0];
+            int port = Integer.parseInt(sections[1]);
 
             // Creates a TCP connection with the starting node
             socket = new Socket(ipAddress, port);
 
             // This will send out a START message
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-            out.println("START 1 " + startingNodeName);
+            PrintWriter pWriterOut = new PrintWriter(socket.getOutputStream(), true);
+            pWriterOut.println("START 1 " + startingNodeName);
 
             // This will read and check for response
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            String response = in.readLine();
+            BufferedReader bfReaderIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            String response = bfReaderIn.readLine();
 
             // Checks if a START message has been received or not
             if (response != null && response.startsWith("START")) {
@@ -66,12 +66,12 @@ public class TemporaryNode implements TemporaryNodeInterface {
             String putRequest = "PUT? " + key.split("\n").length + " " + value.split("\n").length + "\n" + key + value;
 
             // writing and sending the PUT request to the fullNode
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-            out.println(putRequest);
+            PrintWriter pWriterOut = new PrintWriter(socket.getOutputStream(), true);
+            pWriterOut.println(putRequest);
 
             // checks if there has been a response to the request
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            String response = in.readLine();
+            BufferedReader bfReaderIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            String response = bfReaderIn.readLine();
 
             // Checks if the response is a SUCCESS or has FAILED
             if (response != null && response.equals("SUCCESS")) {
@@ -99,21 +99,21 @@ public class TemporaryNode implements TemporaryNodeInterface {
             String getRequest = "GET? " + key.split("\n").length + "\n" + key;
 
             // This will write and send the GET request
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-            out.println(getRequest);
+            PrintWriter pWriterOut = new PrintWriter(socket.getOutputStream(), true);
+            pWriterOut.println(getRequest);
 
             // Reads and checks if there has been a response to the request
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            String response = in.readLine();
+            BufferedReader bfReaderIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            String response = bfReaderIn.readLine();
 
             // This checks if the output would be a string of value or will not work and output NOPE returning null
             if (response != null && response.startsWith("VALUE")) {
                 // retrieving the value
-                int valueLines = Integer.parseInt(response.split(" ")[1]);
+                int value = Integer.parseInt(response.split(" ")[1]);
                 StringBuilder valueBuilder = new StringBuilder();
-                for (int i = 0; i < valueLines; i++) {
-                    valueBuilder.append(in.readLine());
-                    if (i < valueLines - 1)
+                for (int i = 0; i < value; i++) {
+                    valueBuilder.append(bfReaderIn.readLine());
+                    if (i < value - 1)
                         valueBuilder.append("\n");
                 }
                 // Return the string if the get worked
