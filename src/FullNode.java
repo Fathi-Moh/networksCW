@@ -99,12 +99,12 @@ public class FullNode implements FullNodeInterface {
                             break;
                         default:
                             // A print line to handle unrecognised responses
-                            System.err.println("Received unrecognised response");
+                            System.err.println("Unknown response, cannot identify");
                             break;
                     }
                 } else {
                     // If the response is null an error print line will be displayed and the socket and streams will close
-                    System.err.println("null response has been received. Connection closed.");
+                    System.err.println("Received null response. The connection is now closed.");
                     socket.close();
                     bfReaderIn.close();
                     pWriterOut.close();
@@ -237,9 +237,9 @@ public class FullNode implements FullNodeInterface {
                 nodeHashId = HashID.computeHashID(nodeName);
                 nodeHash = new String(nodeHashId, "UTF-8");
             } catch (UnsupportedEncodingException e) {
-                System.err.println("Unsupported encoding: " + e.getMessage());
+                System.err.println("Error with supporting coding: " + e.getMessage());
             } catch (Exception e) {
-                System.err.println("Error converting node hash to byte array: " + e.getMessage());
+                System.err.println("Issue with converting node hash to byte array: " + e.getMessage());
                 return nearestNodes;
             }
 

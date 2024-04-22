@@ -45,11 +45,11 @@ public class TemporaryNode implements TemporaryNodeInterface {
 
             // Checks if a START message has been received or not
             if (response != null && response.startsWith("START")) {
-                System.out.println("Connected to the 2D#4 network");
+                System.out.println("Connected to 2D#4 network");
                 // Return true if the 2D#4 network can be contacted
                 return true;
             } else {
-                System.err.println("Failed to start communication with starting node");
+                System.err.println("Cannot start communication with starting node. Network can't be contacted");
                 // Return false if the 2D#4 network can't be contacted
                 return false;
             }
@@ -78,17 +78,17 @@ public class TemporaryNode implements TemporaryNodeInterface {
                 // Return true if the store worked
                 return true;
             } else if (response != null && response.equals("FAILED")) {
-                System.err.println("Store unsuccessful, issues with message being refused");
+                System.err.println("Message is being rejected. Store unsuccessful");
                 // Return false if the store failed
                 return false;
             } else {
-                // Prints a line saying there is an issue with receiving the response from the fullNode
-                System.err.println("Invalid response received");
+                // Prints a line saying invalid response received from the fullNode
+                System.err.println("Response received is invalid");
                 return false;
             }
         } catch (IOException e) {
             // Prints a line stating there are issues with the store method functionality
-            System.err.println("Issue storing key-value pair: " + e.getMessage());
+            System.err.println("Issue with storing key-value pair: " + e.getMessage());
             return false;
         }
     }
